@@ -158,7 +158,7 @@ export default function App() {
                 ))}
               </div>
             </section>
-            <Worksite items={items} alerts={alerts} siteHistory={siteHistory} serial={serial} now={now} onAcknowledge={onAcknowledge} onOpen={open} />
+            <Worksite items={items} alerts={alerts} events={events} siteHistory={siteHistory} serial={serial} now={now} onAcknowledge={onAcknowledge} onOpen={open} />
           </div>
         )}
       </div>
