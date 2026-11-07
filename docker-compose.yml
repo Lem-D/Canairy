@@ -5,6 +5,34 @@ services:
       target: dashboard
     ports:
       - "3000:80"
+    # The dashboard is useless without the bridge, so `docker compose up dashboard` starts both.
+    depends_on:
+      - bridge
+
+  # Simulated workers only - works on any machine, no Arduino needed.
+  # Run `docker compose up` for dashboard + simulated bridge.
+  bridge:
+    build:
+      context: .
+      target: bridge
+    command: ["--no-serial"]
+    ports:
+      - "8080:8080"
+
+  # Real receiver Arduino + simulated workers. Uses port 8080 too, so stop `bridge` first:
+  #   docker compose stop bridge
+  #   usbipd attach --wsl --hardware-id 2341:0043      (Windows only)
+  #   docker compose --profile hardware up bridge-live
+  bridge-live:
+    profiles: ["hardware"]
+    build:
+      context: .
+      target: bridge
+    command: ["--port", "${SERIAL_PORT:-/dev/ttyACM0}", "--baud", "115200"]
+    ports:
+      - "8080:8080"
+    devices:
+      - ${SERIAL_PORT:-/dev/ttyACM0}:${SERIAL_PORT:-/dev/ttyACM0}
 
   # Only runs when asked for: `docker compose run --rm firmware`
   firmware:
@@ -17,7 +45,7 @@ services:
         SKETCH: ${SKETCH:-receiver}
     environment:
       PORT: ${SERIAL_PORT:-/dev/ttyACM0}
-      BAUD: "9600"
+      BAUD: "115200"
     devices:
       - ${SERIAL_PORT:-/dev/ttyACM0}:${SERIAL_PORT:-/dev/ttyACM0}
     stdin_open: true
