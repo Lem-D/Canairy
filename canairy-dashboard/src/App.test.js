@@ -18,12 +18,10 @@ class FakeSocket {
 
 beforeEach(() => {
   global.WebSocket = FakeSocket;
+  window.location.hash = '';
 });
 
-test('shows a card per worker and sends SOS acknowledgements to the bridge', () => {
-  render(<App />);
-  expect(screen.getByText(/Not connected/)).toBeInTheDocument();
-
+function sendSnapshot(workers) {
   const now = Date.now();
   act(() => {
     FakeSocket.last.onopen();
@@ -32,17 +30,38 @@ test('shows a card per worker and sends SOS acknowledgements to the bridge', () 
         type: 'snapshot',
         serverTime: now,
         serial: { state: 'searching', path: null },
-        workers: [
-          { id: 101, name: 'Ava Chen', source: 'sim', gas: 180, sos: false, acknowledged: false, seq: 1, lost: 0, lastSeen: now },
-          { id: 102, name: 'Marcus Reid', source: 'sim', gas: 200, sos: true, acknowledged: false, seq: 1, lost: 0, lastSeen: now },
-        ],
+        workers: workers.map((w) => ({ source: 'sim', sos: false, acknowledged: false, seq: 1, lost: 0, lastSeen: now, ...w })),
       }),
     });
   });
+}
+
+test('shows a hint when the bridge is not running', () => {
+  render(<App />);
+  expect(screen.getByText(/bridge isn't running/i)).toBeInTheDocument();
+});
+
+test('shows worker cards and sends SOS acknowledgements to the bridge', () => {
+  render(<App />);
+  sendSnapshot([
+    { id: 101, name: 'Ava Chen', gas: 180 },
+    { id: 102, name: 'Marcus Reid', gas: 200, sos: true },
+  ]);
 
   expect(screen.getByText('Ava Chen')).toBeInTheDocument();
-  expect(screen.getByText('NOT OK: SOS')).toBeInTheDocument();
+  expect(screen.getByRole('alert')).toHaveTextContent('SOS from Marcus Reid');
 
   act(() => screen.getByRole('button', { name: 'Acknowledge SOS' }).click());
   expect(FakeSocket.last.sent).toContainEqual({ type: 'ack', id: 102 });
+});
+
+test('dangerous gas shows a banner and opens the worker page', () => {
+  render(<App />);
+  sendSnapshot([{ id: 103, name: 'Priya Patel', gas: 700 }]);
+
+  expect(screen.getByRole('alert')).toHaveTextContent('Dangerous gas near Priya Patel');
+  act(() => screen.getAllByRole('button', { name: 'Open details for Priya Patel' })[0].click());
+  act(() => window.dispatchEvent(new HashChangeEvent('hashchange')));
+  expect(screen.getByRole('heading', { name: 'Priya Patel' })).toBeInTheDocument();
+  expect(screen.getByText('Gas readings')).toBeInTheDocument();
 });
