@@ -2,3 +2,5 @@
 **/node_modules
 canairy-dashboard/build
 firmware-out
+bridge/.venv
+**/__pycache__
