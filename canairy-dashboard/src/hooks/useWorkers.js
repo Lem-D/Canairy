@@ -3,32 +3,36 @@
 // Start the bridge first (see bridge/README.md), then in any component:
 //
 //   import { useWorkers } from './hooks/useWorkers';
-//   const { workers, connected, serial, acknowledge } = useWorkers();
+//   const { workers, connected, serial, siteHistory, acknowledge, now } = useWorkers();
 //
 //   workers      every worker the bridge has seen, sorted by id. Each one has:
 //                  id, name, source ('live' | 'sim'), gas (0-1023), sos,
 //                  acknowledged, seq, lost (packets missed), lastSeen (ms),
-//                  offline   true if nothing heard for OFFLINE_AFTER_MS
-//                  level     'safe' | 'warning' | 'danger' from GAS_THRESHOLDS
-//                  ok        false if SOS, gas at danger, or offline
-//                  reasons   why not ok, e.g. ['sos', 'gas', 'offline']
+//                  offline     true if nothing heard for OFFLINE_AFTER_MS
+//                  level       'safe' | 'warning' | 'danger' from GAS_THRESHOLDS
+//                  ok          false if SOS, gas at danger, or offline
+//                  reasons     why not ok, e.g. ['sos', 'gas', 'offline']
+//                  history     [{ t, gas }] for the last 10 minutes, oldest first
+//                  received    readings this browser has received
+//                  firstSeen   when this browser first heard from them (ms)
+//                  sosSince    when the current SOS started (ms), or null
+//                  dangerSince when gas went above the danger line (ms), or null
 //   connected    true while the browser is connected to the bridge
-//   serial       receiver Arduino status from the bridge:
-//                  { state: 'connected' | 'searching' | 'disabled', path }
+//   serial       receiver Arduino status: { state: 'connected' | 'searching' | 'disabled', path }
+//   siteHistory  highest gas reading among online workers, once a second, last minute
 //   acknowledge(id)  tell the bridge a supervisor has seen this worker's SOS
+//   now          the current time, updated every second
 //
 // It reconnects by itself if the bridge is restarted.
+// Settings (bridge address, gas cutoffs, ...) are in src/config.js.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BRIDGE_URL, GAS_THRESHOLDS, OFFLINE_AFTER_MS } from '../config';
 
-export const BRIDGE_URL = 'ws://localhost:8080';
+export { BRIDGE_URL, GAS_THRESHOLDS, OFFLINE_AFTER_MS };
 
-// No data for this long and the worker shows as offline.
-export const OFFLINE_AFTER_MS = 5000;
-
-// PLACEHOLDER thresholds on the raw MQ-2 reading (0-1023). The team still has
-// to pick these: take a clean-air reading after warm-up and set them from that.
-export const GAS_THRESHOLDS = { warning: 400, danger: 600 };
+const HISTORY_MS = 10 * 60 * 1000;
+const SITE_HISTORY_LENGTH = 60;
 
 export function gasLevel(gas) {
   if (gas >= GAS_THRESHOLDS.danger) return 'danger';
@@ -36,12 +40,35 @@ export function gasLevel(gas) {
   return 'safe';
 }
 
+// Adds one reading to a worker, keeping the browser-side extras.
+function withReading(prev, worker, lastSeen) {
+  const isNew = !prev || prev.seq !== worker.seq; // an ack re-sends the same reading
+  let history = prev?.history || [];
+  if (isNew) {
+    history = [...history, { t: lastSeen, gas: worker.gas }];
+    while (history.length && lastSeen - history[0].t > HISTORY_MS) history = history.slice(1);
+  }
+  const danger = worker.gas >= GAS_THRESHOLDS.danger;
+  return {
+    ...worker,
+    lastSeen,
+    history,
+    received: (prev?.received || 0) + (isNew ? 1 : 0),
+    firstSeen: prev?.firstSeen ?? lastSeen,
+    sosSince: worker.sos ? prev?.sosSince ?? lastSeen : null,
+    dangerSince: danger ? prev?.dangerSince ?? lastSeen : null,
+  };
+}
+
 export function useWorkers({ url = BRIDGE_URL, offlineAfterMs = OFFLINE_AFTER_MS } = {}) {
   const [byId, setById] = useState({});
   const [connected, setConnected] = useState(false);
   const [serial, setSerial] = useState(null);
   const [now, setNow] = useState(() => Date.now());
+  const [siteHistory, setSiteHistory] = useState([]);
   const socketRef = useRef(null);
+  const byIdRef = useRef(byId);
+  byIdRef.current = byId;
 
   useEffect(() => {
     let socket;
@@ -72,10 +99,12 @@ export function useWorkers({ url = BRIDGE_URL, offlineAfterMs = OFFLINE_AFTER_MS
         // lastSeen is converted to this browser's clock, in case they differ.
         if (msg.type === 'snapshot') {
           const offset = Date.now() - msg.serverTime;
-          setById(Object.fromEntries(msg.workers.map((w) => [w.id, { ...w, lastSeen: w.lastSeen + offset }])));
+          setById((prev) =>
+            Object.fromEntries(msg.workers.map((w) => [w.id, withReading(prev[w.id], w, w.lastSeen + offset)])),
+          );
           setSerial(msg.serial);
         } else if (msg.type === 'worker') {
-          setById((prev) => ({ ...prev, [msg.worker.id]: { ...msg.worker, lastSeen: Date.now() } }));
+          setById((prev) => ({ ...prev, [msg.worker.id]: withReading(prev[msg.worker.id], msg.worker, Date.now()) }));
         } else if (msg.type === 'serial') {
           setSerial(msg.serial);
         }
@@ -92,7 +121,15 @@ export function useWorkers({ url = BRIDGE_URL, offlineAfterMs = OFFLINE_AFTER_MS
     }
 
     connect();
-    const clock = setInterval(() => setNow(Date.now()), 1000);
+    const clock = setInterval(() => {
+      const t = Date.now();
+      setNow(t);
+      const online = Object.values(byIdRef.current).filter((w) => t - w.lastSeen <= offlineAfterMs);
+      if (online.length) {
+        const max = Math.max(...online.map((w) => w.gas));
+        setSiteHistory((prev) => [...prev, max].slice(-SITE_HISTORY_LENGTH));
+      }
+    }, 1000);
 
     return () => {
       stopped = true;
@@ -100,7 +137,7 @@ export function useWorkers({ url = BRIDGE_URL, offlineAfterMs = OFFLINE_AFTER_MS
       clearInterval(clock);
       socket.close();
     };
-  }, [url]);
+  }, [url, offlineAfterMs]);
 
   const acknowledge = useCallback((id) => {
     const socket = socketRef.current;
@@ -124,5 +161,5 @@ export function useWorkers({ url = BRIDGE_URL, offlineAfterMs = OFFLINE_AFTER_MS
     [byId, now, offlineAfterMs],
   );
 
-  return { workers, connected, serial, acknowledge };
+  return { workers, connected, serial, siteHistory, acknowledge, now };
 }
