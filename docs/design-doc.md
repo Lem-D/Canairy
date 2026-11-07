@@ -30,11 +30,11 @@ Canairy is a wearable for construction and manufacturing workers that makes them
 Canairy is a one-way chain: the wearable only transmits, and everything downstream only listens. A laptop can't receive 315MHz on its own, so the receiver is a second Arduino (already owned) plugged into the laptop over USB.
 
 ```
-+-----------------+   315MHz RF   +-----------------+   USB serial   +------------------+   live updates   +------------------+
++-----------------+   3433z RF   +-----------------+   USB serial   +------------------+   live updates   +------------------+
 | Wearable        | ------------> | Receiver Arduino| -------------> | Laptop server    | ---------------> | Dashboard        |
 | MQ-2 gas sensor |               | Arduino + RF RX |                | Collects data    |                  | Supervisor view  |
 | SOS button      |               | Checks packets  |                | Maps IDs to      |                  | All workers      |
-| LEDs + OLED     |               | Passes to laptop|                |   workers        |                  | Air levels + SOS |
+| LEDs + LCD      |               | Passes to laptop|                |   workers        |                  | Air levels + SOS |
 | Arduino + RF TX |               |                 |                | Spots dropouts   |                  | Who went quiet   |
 | 9V battery      |               |                 |                | Raises SOS alerts|                  |                  |
 +-----------------+               +-----------------+                +------------------+                  +------------------+
@@ -76,7 +76,7 @@ The wearable senses and transmits, the receiver Arduino hears it and passes each
 | What the wearable sends | Which fields and how often. A starting idea from earlier notes: worker ID, gas reading, SOS flag and a counter to spot dropped packets, sent about once a second and right away on SOS |
 | Alert levels | How many levels, and how to set the thresholds |
 | SOS location | Real GPS or fake coordinates, and how it reaches the dashboard |
-| Dashboard stack | Which tools the team knows best. Options raised so far: a Python script reading the serial port with a Streamlit, Tkinter or Flask UI, or a Chrome page using the Web Serial API with nothing to install |
+| Dashboard stack | Chosen: a React dashboard (`canairy-dashboard/`) fed by a Python bridge (`bridge/`, pyserial + websockets) that reads the receiver Arduino and streams to `ws://localhost:8080`, with simulated workers built in. How to run it and the proposed serial line format (`id,gas,sos,seq`) are in `bridge/README.md` |
 | Showing a full crew | Simulate extra workers on the dashboard (saying which one is live), make the wearable's ID switchable, or add a second wearable later |
 | Form factor | Armband, vest clip, hard hat, or lanyard |
 | Ownership | Who leads hardware, server, dashboard and pitch |

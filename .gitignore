@@ -1,2 +1,6 @@
 docker/certs/*.crt
 firmware-out/
+
+# Python bridge
+.venv/
+__pycache__/
