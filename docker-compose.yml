@@ -14,6 +14,7 @@ services:
       target: firmware
       args:
         FQBN: ${FQBN:-arduino:avr:uno}
+        SKETCH: ${SKETCH:-receiver}
     environment:
       PORT: ${SERIAL_PORT:-/dev/ttyACM0}
       BAUD: "115200"

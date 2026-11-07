@@ -2,7 +2,7 @@
 #
 # One Dockerfile, several targets:
 #   dashboard      -> builds the React app and serves it with nginx
-#   firmware       -> compiles src/sketch.ino with arduino-cli; at runtime uploads it to a board
+#   firmware       -> compiles src/$SKETCH/$SKETCH.ino with arduino-cli; at runtime uploads it to a board
 #   firmware-out   -> just the compiled .hex/.bin files (for flashing from the host)
 
 ########## Dashboard ##########
@@ -29,6 +29,8 @@ ARG ARDUINO_CLI_VERSION=1.1.1
 # Mega = arduino:avr:mega, ESP32 = esp32:esp32:esp32 (needs extra board URL).
 ARG FQBN=arduino:avr:uno
 ARG BOARD_MANAGER_URLS=""
+# Which sketch under src/ to build: receiver or transmitter.
+ARG SKETCH=receiver
 
 # Extra CA certs (e.g. antivirus/corporate HTTPS inspection). See docker/certs/README.md.
 COPY docker/certs/ /usr/local/share/ca-certificates/extra/
@@ -45,15 +47,15 @@ RUN arduino-cli config init \
  && arduino-cli core update-index \
  && arduino-cli core install "$(echo "$FQBN" | cut -d: -f1,2)"
 
-# arduino-cli requires the folder name to match the .ino name, so place it in /sketch/sketch/.
+# arduino-cli requires the folder name to match the .ino name: src/receiver/receiver.ino -> /sketch/receiver/.
 WORKDIR /sketch
-COPY src/ ./sketch/
+COPY src/${SKETCH}/ ./${SKETCH}/
 # Compile during the build: `docker compose build` fails fast if the sketch doesn't compile.
-RUN arduino-cli compile --fqbn "$FQBN" --output-dir /build ./sketch
+RUN arduino-cli compile --fqbn "$FQBN" --output-dir /build "./${SKETCH}"
 
 COPY docker/flash.sh /usr/local/bin/flash
 RUN sed -i 's/\r$//' /usr/local/bin/flash && chmod +x /usr/local/bin/flash
-ENV FQBN=${FQBN} PORT=/dev/ttyACM0 BAUD=115200
+ENV FQBN=${FQBN} SKETCH=${SKETCH} PORT=/dev/ttyACM0 BAUD=115200
 ENTRYPOINT ["flash"]
 CMD ["upload"]
 
