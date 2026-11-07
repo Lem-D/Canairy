@@ -21,6 +21,20 @@ The bridge makes up simulated workers when no Arduino is plugged in, so you can 
 | Node.js | 18+ (with npm) | `node -v` |
 | Docker (optional) | any recent | `docker --version` |
 
+### Quick start: setup script
+
+One script installs everything (bridge virtual environment, dashboard packages) and runs the tests. It checks that Python and Node are installed and tells you where to get them if not. It is safe to re-run.
+
+```bash
+./scripts/setup.sh                 # Mac / Linux
+```
+
+```powershell
+.\scripts\setup.ps1                # Windows PowerShell
+```
+
+Add `--skip-tests` (Windows: `-SkipTests`) to skip the test run. If PowerShell blocks the script, run `Set-ExecutionPolicy -Scope Process Bypass` first. When it finishes, continue with step 1 below to start the programs. Prefer to do it by hand? The steps below are what the script does.
+
 ### 1. Start the bridge (terminal 1)
 
 First time only, create a virtual environment and install dependencies:
@@ -61,7 +75,7 @@ cd canairy-dashboard
 npm run build        # outputs static files to canairy-dashboard/build
 ```
 
-Or build and serve it with nginx via Docker at http://localhost:3000 (the bridge still runs on your laptop):
+Or build and serve it with nginx via Docker at http://localhost:3000 (this also starts the bridge with simulated workers):
 
 ```bash
 docker compose up --build dashboard
