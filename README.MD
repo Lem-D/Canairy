@@ -114,6 +114,29 @@ The firmware is compiled and uploaded from Docker, so nothing Arduino-related ne
 
 The script hands the board to Docker, uploads, opens the serial monitor (Ctrl+C to exit), then gives the board back to Windows. The first run asks for admin once. For CH340 clone boards add `-HardwareId 1a86:7523 -SerialPort /dev/ttyUSB0`. On Linux, run `SKETCH=transmitter docker compose run --rm --build firmware` directly.
 
+### macOS
+
+Docker Desktop cannot pass USB serial devices directly into containers. The macOS script uses Docker to compile the firmware, then uses Arduino CLI on the host to upload it.
+
+Install the prerequisites:
+
+```bash
+brew install arduino-cli
+arduino-cli core install arduino:avr
+arduino-cli lib install RadioHead LiquidCrystal
+```
+
+Connect the Arduino and run from the repository root:
+
+```bash
+./scripts/flash.sh                                      # receiver
+./scripts/flash.sh --sketch transmitter                 # wearable
+./scripts/flash.sh --port /dev/cu.usbmodem1101          # choose a port
+./scripts/flash.sh --no-monitor                         # upload without opening monitor
+```
+
+The script automatically detects a single `/dev/cu.*` port. If multiple ports are connected, specify one with `--port`. The serial monitor uses `115200` baud.
+
 Wiring:
 
 | Board | Part | Arduino pins |
