@@ -7,6 +7,10 @@
 
 ########## Dashboard ##########
 FROM node:24-alpine AS dashboard-build
+# Extra CA certs (e.g. antivirus/corporate HTTPS inspection). See docker/certs/README.md.
+COPY docker/certs/ /usr/local/share/ca-certificates/extra/
+RUN cat /usr/local/share/ca-certificates/extra/*.crt > /etc/ssl/extra-ca.pem 2>/dev/null || true
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/extra-ca.pem
 WORKDIR /app
 COPY canairy-dashboard/package.json canairy-dashboard/package-lock.json ./
 RUN npm ci
@@ -26,9 +30,12 @@ ARG ARDUINO_CLI_VERSION=1.1.1
 ARG FQBN=arduino:avr:uno
 ARG BOARD_MANAGER_URLS=""
 
+# Extra CA certs (e.g. antivirus/corporate HTTPS inspection). See docker/certs/README.md.
+COPY docker/certs/ /usr/local/share/ca-certificates/extra/
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ca-certificates curl \
  && rm -rf /var/lib/apt/lists/* \
+ && update-ca-certificates \
  && curl -fsSL "https://downloads.arduino.cc/arduino-cli/arduino-cli_${ARDUINO_CLI_VERSION}_Linux_64bit.tar.gz" \
     | tar -xz -C /usr/local/bin arduino-cli
 
