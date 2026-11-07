@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import App from './App';
 
 // A fake bridge connection, so the test doesn't need the real bridge running.
@@ -48,7 +48,7 @@ test('shows worker cards and sends SOS acknowledgements to the bridge', () => {
     { id: 102, name: 'Marcus Reid', gas: 200, sos: true },
   ]);
 
-  expect(screen.getByText('Ava Chen')).toBeInTheDocument();
+  expect(screen.getByRole('region', { name: 'Workers' })).toHaveTextContent('Ava Chen');
   expect(screen.getByRole('alert')).toHaveTextContent('SOS from Marcus Reid');
 
   act(() => screen.getByRole('button', { name: 'Acknowledge SOS' }).click());
@@ -64,4 +64,18 @@ test('dangerous gas shows a banner and opens the worker page', () => {
   act(() => window.dispatchEvent(new HashChangeEvent('hashchange')));
   expect(screen.getByRole('heading', { name: 'Priya Patel' })).toBeInTheDocument();
   expect(screen.getByText('Gas readings')).toBeInTheDocument();
+});
+
+test('main page logs summarize events for each worker', () => {
+  render(<App />);
+  sendSnapshot([
+    { id: 101, name: 'Ava Chen', gas: 180 },
+    { id: 102, name: 'Marcus Reid', gas: 200, sos: true },
+  ]);
+
+  const logs = screen.getByRole('region', { name: 'Worker logs' });
+  expect(within(logs).getByRole('button', { name: 'Open details for Ava Chen' })).toBeInTheDocument();
+  expect(within(logs).getByRole('button', { name: 'Open details for Marcus Reid' })).toBeInTheDocument();
+  expect(logs).toHaveTextContent('SOS active');
+  expect(within(logs).getAllByText('Wearable connected')).toHaveLength(2);
 });

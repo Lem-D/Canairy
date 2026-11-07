@@ -1,4 +1,5 @@
 import Bars from './Bars';
+import WorkerLogs from './WorkerLogs';
 import { SITE, ZONES } from '../config';
 import { duration, initials } from '../lib';
 
@@ -13,7 +14,7 @@ function Stat({ label, value, tone }) {
 
 const RING = { 0: 'red', 1: 'red', 2: 'grey', 3: 'yellow', 4: 'green' };
 
-export default function Worksite({ items, alerts, siteHistory, serial, now, onAcknowledge, onOpen }) {
+export default function Worksite({ items, alerts, events, siteHistory, serial, now, onAcknowledge, onOpen }) {
   const notOk = items.filter((i) => i.view.status === 'NOT OK').length;
   const offline = items.filter((i) => i.view.status === 'NO SIGNAL').length;
   const zoneNames = [...Object.keys(ZONES), null];
@@ -59,6 +60,8 @@ export default function Worksite({ items, alerts, siteHistory, serial, now, onAc
           </div>
         ))}
       </section>
+
+      <WorkerLogs items={items} events={events} now={now} onOpen={onOpen} />
 
       <section className="panel box">
         <div className="box-head">
