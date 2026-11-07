@@ -1,70 +1,72 @@
-# Getting Started with Create React App
+# Canairy dashboard
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+The supervisor dashboard: one simple card per worker showing their status. It gets live data from
+the bridge (`../bridge`) over a WebSocket at `ws://localhost:8080`.
 
-## Available Scripts
+```
+Receiver Arduino --USB--> bridge (Python) --WebSocket--> this dashboard
+```
 
-In the project directory, you can run:
+## Running it
 
-### `npm start`
+You need two terminals: one for the bridge, one for the dashboard.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+**Terminal 1, the bridge** (full guide in [`../bridge/README.md`](../bridge/README.md)):
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+```bash
+cd bridge
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+python bridge.py
+```
 
-### `npm test`
+With no Arduino plugged in it makes up 4 simulated workers, so you can work on
+the dashboard without hardware.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+**Terminal 2, the dashboard.** You need Node.js 18 or newer (`node -v` to check,
+get it from nodejs.org).
 
-### `npm run build`
+```bash
+cd canairy-dashboard
+npm install          # first time only, and after someone adds a package
+npm start
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Your browser opens http://localhost:3000. Save any file in `src/` and the page
+updates by itself. Stop it with Ctrl+C.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+If the page says "Not connected", start terminal 1. The page
+reconnects on its own, so the order doesn't matter.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Rehearsing the demo
 
-### `npm run eject`
+In the bridge terminal, type `sos 101` or `gas 102` and press Enter. A simulated
+worker presses SOS or walks into bad air, and the dashboard reacts within a second.
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### Running it in Docker
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+`docker compose up dashboard` serves a built copy at http://localhost:3000. The
+bridge still has to run on the laptop itself (Docker can't see USB on Mac or
+Windows). The page connects to `ws://localhost:8080` from your browser, so this works.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+## Where things are
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+| File | What it is |
+| --- | --- |
+| `src/App.js` | The worker cards |
+| `src/App.css` | How the cards look |
+| `src/hooks/useWorkers.js` | Talks to the bridge and works out OK / Not OK. The gas cutoffs are at the top |
 
-## Learn More
+## What counts as "Not OK"
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+A worker is Not OK if SOS is active, gas is at or above the danger cutoff, or
+nothing was heard from them for 5 seconds. Not OK cards move to the top.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+**The gas cutoffs are placeholders** (`GAS_THRESHOLDS` at the top of
+`src/hooks/useWorkers.js`: warning 400, danger 600 on the raw 0-1023 reading).
+The team should take a clean-air reading after the sensor warms up and pick
+real numbers.
 
-### Code Splitting
+## Other commands
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+- `npm test` runs the tests (press `q` to quit).
+- `npm run build` makes the production copy in `build/` (Docker does this for you).
