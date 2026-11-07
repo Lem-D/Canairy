@@ -47,7 +47,7 @@ RUN arduino-cli config init \
  && arduino-cli core update-index \
  && arduino-cli core install "$(echo "$FQBN" | cut -d: -f1,2)" \
  && arduino-cli lib update-index \
- && arduino-cli lib install RadioHead
+ &&  arduino-cli lib install RadioHead LiquidCrystal
 
 # arduino-cli requires the folder name to match the .ino name: src/receiver/receiver.ino -> /sketch/receiver/.
 WORKDIR /sketch
