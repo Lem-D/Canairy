@@ -36,6 +36,16 @@ NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 command -v npm >/dev/null 2>&1 || fail "npm not found. It normally comes with Node.js: https://nodejs.org/"
 echo "Node:   $(node -v), npm $(npm -v)"
 
+# --- Serial port access (Linux only) -----------------------------------------
+# Opening /dev/ttyACM0 or /dev/ttyUSB0 needs the "dialout" group (Arch: "uucp").
+# This only matters for a real Arduino, so warn instead of failing.
+if [ "$(uname -s)" = "Linux" ] && ! id -nG | tr ' ' '\n' | grep -qxE 'dialout|uucp'; then
+  step "Note: Arduino serial access"
+  echo "Your user isn't in the 'dialout' group, so the bridge can't open an Arduino's serial port."
+  echo "Not needed for simulated workers. For a real Arduino run:"
+  echo "  sudo usermod -aG dialout \$USER   (Arch: uucp), then log out and back in"
+fi
+
 # --- Bridge ------------------------------------------------------------------
 step "Setting up the bridge (Python virtual environment)"
 cd "$ROOT/bridge"
