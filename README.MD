@@ -7,6 +7,7 @@ Wearable --315MHz RF--> Receiver Arduino --USB--> bridge (Python) --WebSocket-->
 ```
 
 Gas sensor datasheet (MQ-2): https://www.mouser.com/datasheet/2/321/605-00008-MQ-2-Datasheet-370464.pdf
+Hazardous Liquified Petroleum Gas Levels (LPG PPM): https://www.cdc.gov/niosh/idlh/68476857.html 
 
 ## Building and running the software (no hardware needed)
 
