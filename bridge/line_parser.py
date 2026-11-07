@@ -13,7 +13,7 @@ Anything else is ignored, so the Arduino can still print debug text.
 Lines starting with # are always ignored (handy for comments/debug).
 
 If the format changes, this is the only function that needs editing.
-It just has to return {"id", "gas", "sos", "seq"} or None.
+It just has to return {"name" : "Ryker", "gas : number in ppm", "sos" : True, "seq: number} or None.
 """
 
 
