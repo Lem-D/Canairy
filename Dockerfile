@@ -2,8 +2,9 @@
 #
 # One Dockerfile, several targets:
 #   dashboard      -> builds the React app and serves it with nginx
-#   firmware       -> compiles src/sketch.ino with arduino-cli; at runtime uploads it to a board
+#   firmware       -> compiles src/$SKETCH/$SKETCH.ino with arduino-cli; at runtime uploads it to a board
 #   firmware-out   -> just the compiled .hex/.bin files (for flashing from the host)
+#   bridge         -> Python bridge: receiver Arduino (serial) + simulated workers -> WebSocket :8080
 
 ########## Dashboard ##########
 FROM node:24-alpine AS dashboard-build
@@ -29,6 +30,8 @@ ARG ARDUINO_CLI_VERSION=1.1.1
 # Mega = arduino:avr:mega, ESP32 = esp32:esp32:esp32 (needs extra board URL).
 ARG FQBN=arduino:avr:uno
 ARG BOARD_MANAGER_URLS=""
+# Which sketch under src/ to build: receiver or transmitter.
+ARG SKETCH=receiver
 
 # Extra CA certs (e.g. antivirus/corporate HTTPS inspection). See docker/certs/README.md.
 COPY docker/certs/ /usr/local/share/ca-certificates/extra/
@@ -43,19 +46,37 @@ RUN apt-get update \
 RUN arduino-cli config init \
  && if [ -n "$BOARD_MANAGER_URLS" ]; then arduino-cli config set board_manager.additional_urls "$BOARD_MANAGER_URLS"; fi \
  && arduino-cli core update-index \
- && arduino-cli core install "$(echo "$FQBN" | cut -d: -f1,2)"
+ && arduino-cli core install "$(echo "$FQBN" | cut -d: -f1,2)" \
+ && arduino-cli lib update-index \
+ &&  arduino-cli lib install RadioHead LiquidCrystal
 
-# arduino-cli requires the folder name to match the .ino name, so place it in /sketch/sketch/.
+# arduino-cli requires the folder name to match the .ino name: src/receiver/receiver.ino -> /sketch/receiver/.
 WORKDIR /sketch
-COPY src/ ./sketch/
+COPY src/${SKETCH}/ ./${SKETCH}/
 # Compile during the build: `docker compose build` fails fast if the sketch doesn't compile.
-RUN arduino-cli compile --fqbn "$FQBN" --output-dir /build ./sketch
+RUN arduino-cli compile --fqbn "$FQBN" --output-dir /build "./${SKETCH}"
 
 COPY docker/flash.sh /usr/local/bin/flash
 RUN sed -i 's/\r$//' /usr/local/bin/flash && chmod +x /usr/local/bin/flash
-ENV FQBN=${FQBN} PORT=/dev/ttyACM0 BAUD=115200
+ENV FQBN=${FQBN} SKETCH=${SKETCH} PORT=/dev/ttyACM0 BAUD=115200
 ENTRYPOINT ["flash"]
 CMD ["upload"]
 
 FROM scratch AS firmware-out
 COPY --from=firmware /build /
+
+########## Bridge ##########
+FROM python:3.13-slim AS bridge
+# Extra CA certs (e.g. antivirus/corporate HTTPS inspection). See docker/certs/README.md.
+COPY docker/certs/ /usr/local/share/ca-certificates/extra/
+RUN update-ca-certificates
+ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1
+WORKDIR /bridge
+COPY bridge/requirements.txt ./
+RUN pip install -r requirements.txt
+COPY bridge/ ./
+EXPOSE 8080
+# Listen on all interfaces so the published port reaches it from the host.
+ENTRYPOINT ["python", "bridge.py", "--host", "0.0.0.0"]

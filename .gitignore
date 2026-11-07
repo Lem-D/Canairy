@@ -1,5 +1,6 @@
 docker/certs/*.crt
 firmware-out/
+.vscode/
 
 # Python bridge
 .venv/

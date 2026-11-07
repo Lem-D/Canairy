@@ -68,6 +68,49 @@ docker compose up --build dashboard
 
 If the Docker build fails on HTTPS certificate errors (antivirus or corporate proxy), see [`docker/certs/README.md`](docker/certs/README.md).
 
+### Everything in Docker
+
+Docker is the only thing you need to install; Python, Node and the Arduino toolchain all live in the images.
+
+```bash
+docker compose up -d --build     # dashboard (http://localhost:3000) + bridge with simulated workers
+docker compose down              # stop
+```
+
+To feed in the real receiver Arduino instead of only simulated workers:
+
+```powershell
+docker compose stop bridge
+usbipd attach --wsl --hardware-id 2341:0043      # Windows only: hand the board to Docker
+docker compose --profile hardware up --build bridge-live
+usbipd detach --hardware-id 2341:0043            # when done
+```
+
+Port 8080 must be free: the dashboard always connects to `ws://localhost:8080`.
+
+## Flashing the Arduinos
+
+The firmware is compiled and uploaded from Docker, so nothing Arduino-related needs installing. On Windows you also need [usbipd-win](https://github.com/dorssel/usbipd-win) (`winget install usbipd`), because Docker Desktop can't see USB devices by itself. From the repo root in PowerShell:
+
+```powershell
+.\scripts\flash.ps1                        # receiver (src/receiver)
+.\scripts\flash.ps1 -Sketch transmitter    # wearable (src/transmitter)
+```
+
+The script hands the board to Docker, uploads, opens the serial monitor (Ctrl+C to exit), then gives the board back to Windows. The first run asks for admin once. For CH340 clone boards add `-HardwareId 1a86:7523 -SerialPort /dev/ttyUSB0`. On Linux, run `SKETCH=transmitter docker compose run --rm --build firmware` directly.
+
+Wiring:
+
+| Board | Part | Arduino pins |
+| --- | --- | --- |
+| Wearable | RF transmitter DATA | 12 |
+| Wearable | MQ-2 AO | A0 |
+| Wearable | SOS button | 2 and GND |
+| Receiver | RF receiver DATA | 7 |
+| Receiver | 16x2 LCD (parallel) | RS 12, E 11, D4-D7 5/4/3/2, V0 (contrast) 6 |
+
+Set `NODE_ID` in `src/transmitter/transmitter.ino` to give each wearable its own number. `MOCK_DATA` at the top of `src/receiver/receiver.ino` makes the receiver invent readings for testing without a wearable; set it to `0` for real use.
+
 ## Testing
 
 | What | Command | Run from |

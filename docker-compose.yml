@@ -14,9 +14,10 @@ services:
       target: firmware
       args:
         FQBN: ${FQBN:-arduino:avr:uno}
+        SKETCH: ${SKETCH:-receiver}
     environment:
       PORT: ${SERIAL_PORT:-/dev/ttyACM0}
-      BAUD: "115200"
+      BAUD: "9600"
     devices:
       - ${SERIAL_PORT:-/dev/ttyACM0}:${SERIAL_PORT:-/dev/ttyACM0}
     stdin_open: true

@@ -5,6 +5,7 @@ Options:
   --port <name>     Use this serial port instead of auto-detecting (e.g. COM3)
   --baud <n>        Baud rate, must match Serial.begin() on the Arduino (default 115200)
   --ws-port <n>     WebSocket port (default 8080)
+  --host <addr>     Address to listen on (default localhost; 0.0.0.0 in Docker)
   --sim <n>         Number of simulated workers (default 4, 0 turns them off)
   --no-serial       Don't look for an Arduino at all (simulation only)
 """
@@ -136,6 +137,7 @@ async def main():
     ap.add_argument("--port", help="serial port, e.g. COM3 or /dev/ttyACM0 (default: find it automatically)")
     ap.add_argument("--baud", type=int, default=115200, help="must match Serial.begin() on the Arduino")
     ap.add_argument("--ws-port", type=int, default=8080, help="WebSocket port")
+    ap.add_argument("--host", default="localhost", help="address to listen on (0.0.0.0 inside Docker)")
     ap.add_argument("--sim", type=int, default=4, help="number of simulated workers (0 turns them off)")
     ap.add_argument("--no-serial", action="store_true", help="don't look for an Arduino (simulation only)")
     args = ap.parse_args()
@@ -145,7 +147,7 @@ async def main():
     bridge = Bridge(sim)
 
     try:
-        server = await serve(bridge.handle_client, "localhost", args.ws_port)
+        server = await serve(bridge.handle_client, args.host, args.ws_port)
     except OSError:
         print(f"[ws] port {args.ws_port} is already in use. Is the bridge already running in another terminal?")
         sys.exit(1)

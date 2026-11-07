@@ -46,9 +46,16 @@ If no Arduino is plugged in, it says it is still looking and keeps the
 simulated workers running. Plug the Arduino in at any time and it connects on
 its own. Unplug it and it waits for it to come back. Stop the bridge with Ctrl+C.
 
-Run the bridge straight on your laptop, not in Docker. Docker Desktop on Mac
-and Windows can't see USB devices, so it would never find the Arduino. The
-dashboard can still run in Docker: the browser connects to the bridge itself.
+You can also run it in Docker (see the root README):
+
+- `docker compose up bridge` runs simulated workers only, on any machine.
+- `docker compose --profile hardware up bridge-live` also reads the real
+  receiver. Docker Desktop can't see USB devices on its own: on Windows, hand
+  the board over first with `usbipd attach --wsl --hardware-id 2341:0043`. On
+  a Mac, run the bridge straight on the laptop for live data.
+
+Inside Docker the bridge is started with `--host 0.0.0.0` so the published
+port reaches it. Outside Docker the default (`localhost`) is fine.
 
 To check it works, start the dashboard too (see
 [`../canairy-dashboard/README.md`](../canairy-dashboard/README.md)). It shows a
