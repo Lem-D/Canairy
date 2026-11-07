@@ -1,0 +1,23 @@
+services:
+  dashboard:
+    build:
+      context: .
+      target: dashboard
+    ports:
+      - "3000:80"
+
+  # Only runs when asked for: `docker compose run --rm firmware`
+  firmware:
+    profiles: ["firmware"]
+    build:
+      context: .
+      target: firmware
+      args:
+        FQBN: ${FQBN:-arduino:avr:uno}
+    environment:
+      PORT: ${SERIAL_PORT:-/dev/ttyACM0}
+      BAUD: "115200"
+    devices:
+      - ${SERIAL_PORT:-/dev/ttyACM0}:${SERIAL_PORT:-/dev/ttyACM0}
+    stdin_open: true
+    tty: true
