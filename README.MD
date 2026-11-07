@@ -75,7 +75,7 @@ cd canairy-dashboard
 npm run build        # outputs static files to canairy-dashboard/build
 ```
 
-Or build and serve it with nginx via Docker at http://localhost:3000 (the bridge still runs on your laptop):
+Or build and serve it with nginx via Docker at http://localhost:3000 (this also starts the bridge with simulated workers):
 
 ```bash
 docker compose up --build dashboard
