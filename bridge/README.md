@@ -50,9 +50,9 @@ Run the bridge straight on your laptop, not in Docker. Docker Desktop on Mac
 and Windows can't see USB devices, so it would never find the Arduino. The
 dashboard can still run in Docker: the browser connects to the bridge itself.
 
-To check it works without React, start the bridge and open
-[`test-page.html`](test-page.html) in a browser (double-click it). It shows a
-live table of every worker.
+To check it works, start the dashboard too (see
+[`../canairy-dashboard/README.md`](../canairy-dashboard/README.md)). It shows a
+card for every worker.
 
 ### Options
 
@@ -136,7 +136,6 @@ knows the format.
 | `simulator.py` | The fake workers |
 | `workers.py` | Worker names shown on the dashboard |
 | `list_ports.py` | Lists serial ports |
-| `test-page.html` | A no-React page to check the bridge works |
 
 ## Using it in the dashboard
 
