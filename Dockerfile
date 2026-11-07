@@ -45,7 +45,9 @@ RUN apt-get update \
 RUN arduino-cli config init \
  && if [ -n "$BOARD_MANAGER_URLS" ]; then arduino-cli config set board_manager.additional_urls "$BOARD_MANAGER_URLS"; fi \
  && arduino-cli core update-index \
- && arduino-cli core install "$(echo "$FQBN" | cut -d: -f1,2)"
+ && arduino-cli core install "$(echo "$FQBN" | cut -d: -f1,2)" \
+ && arduino-cli lib update-index \
+ && arduino-cli lib install RadioHead
 
 # arduino-cli requires the folder name to match the .ino name: src/receiver/receiver.ino -> /sketch/receiver/.
 WORKDIR /sketch
@@ -55,7 +57,7 @@ RUN arduino-cli compile --fqbn "$FQBN" --output-dir /build "./${SKETCH}"
 
 COPY docker/flash.sh /usr/local/bin/flash
 RUN sed -i 's/\r$//' /usr/local/bin/flash && chmod +x /usr/local/bin/flash
-ENV FQBN=${FQBN} SKETCH=${SKETCH} PORT=/dev/ttyACM0 BAUD=115200
+ENV FQBN=${FQBN} SKETCH=${SKETCH} PORT=/dev/ttyACM0 BAUD=9600
 ENTRYPOINT ["flash"]
 CMD ["upload"]
 
