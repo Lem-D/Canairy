@@ -112,7 +112,26 @@ The firmware is compiled and uploaded from Docker, so nothing Arduino-related ne
 .\scripts\flash.ps1 -Sketch transmitter    # wearable (src/transmitter)
 ```
 
-The script hands the board to Docker, uploads, opens the serial monitor (Ctrl+C to exit), then gives the board back to Windows. The first run asks for admin once. For CH340 clone boards add `-HardwareId 1a86:7523 -SerialPort /dev/ttyUSB0`. On Linux, run `SKETCH=transmitter docker compose run --rm --build firmware` directly.
+The script hands the board to Docker, uploads, opens the serial monitor (Ctrl+C to exit), then gives the board back to Windows. The first run asks for admin once. For CH340 clone boards add `-HardwareId 1a86:7523 -SerialPort /dev/ttyUSB0`.
+
+### Linux
+
+Docker can use USB devices directly on Linux, so no host Arduino tools are needed, and you flash with Docker Compose instead of a script. Run from the repository root, with the board plugged in:
+
+```bash
+SKETCH=receiver docker compose run --rm --build firmware       # receiver (src/receiver)
+SKETCH=transmitter docker compose run --rm --build firmware    # wearable (src/transmitter)
+```
+
+The board must be plugged in before you run it, because compose maps the serial device into the container. It defaults to `/dev/ttyACM0` (genuine Uno); for CH340 clones set `SERIAL_PORT=/dev/ttyUSB0`. Run `ls /dev/ttyACM* /dev/ttyUSB*` to see which one appeared. The container uploads, then opens the serial monitor (Ctrl+C to exit).
+
+Running the bridge on the laptop (not in Docker) with a real receiver needs one extra step: your user must be in the `dialout` group (`uucp` on Arch), or the serial port can't be opened.
+
+```bash
+sudo usermod -aG dialout $USER     # then log out and back in
+```
+
+`./scripts/setup.sh` warns if you're not in the group. The Docker route should not need this, because the container runs as root. Only one program can hold the port at a time, so close any serial monitor before starting the bridge.
 
 ### macOS
 
