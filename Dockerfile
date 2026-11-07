@@ -4,6 +4,7 @@
 #   dashboard      -> builds the React app and serves it with nginx
 #   firmware       -> compiles src/$SKETCH/$SKETCH.ino with arduino-cli; at runtime uploads it to a board
 #   firmware-out   -> just the compiled .hex/.bin files (for flashing from the host)
+#   bridge         -> Python bridge: receiver Arduino (serial) + simulated workers -> WebSocket :8080
 
 ########## Dashboard ##########
 FROM node:24-alpine AS dashboard-build
@@ -57,9 +58,25 @@ RUN arduino-cli compile --fqbn "$FQBN" --output-dir /build "./${SKETCH}"
 
 COPY docker/flash.sh /usr/local/bin/flash
 RUN sed -i 's/\r$//' /usr/local/bin/flash && chmod +x /usr/local/bin/flash
-ENV FQBN=${FQBN} SKETCH=${SKETCH} PORT=/dev/ttyACM0 BAUD=9600
+ENV FQBN=${FQBN} SKETCH=${SKETCH} PORT=/dev/ttyACM0 BAUD=115200
 ENTRYPOINT ["flash"]
 CMD ["upload"]
 
 FROM scratch AS firmware-out
 COPY --from=firmware /build /
+
+########## Bridge ##########
+FROM python:3.13-slim AS bridge
+# Extra CA certs (e.g. antivirus/corporate HTTPS inspection). See docker/certs/README.md.
+COPY docker/certs/ /usr/local/share/ca-certificates/extra/
+RUN update-ca-certificates
+ENV PIP_CERT=/etc/ssl/certs/ca-certificates.crt \
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONUNBUFFERED=1
+WORKDIR /bridge
+COPY bridge/requirements.txt ./
+RUN pip install -r requirements.txt
+COPY bridge/ ./
+EXPOSE 8080
+# Listen on all interfaces so the published port reaches it from the host.
+ENTRYPOINT ["python", "bridge.py", "--host", "0.0.0.0"]
