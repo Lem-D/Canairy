@@ -24,7 +24,7 @@ COPY --from=dashboard-build /app/build /usr/share/nginx/html
 EXPOSE 80
 
 ########## Firmware ##########
-FROM debian:bookworm-slim AS firmware
+FROM --platform=linux/amd64 debian:bookworm-slim AS firmware
 ARG ARDUINO_CLI_VERSION=1.1.1
 # Fully-qualified board name. Uno = arduino:avr:uno, Nano = arduino:avr:nano,
 # Mega = arduino:avr:mega, ESP32 = esp32:esp32:esp32 (needs extra board URL).

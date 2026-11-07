@@ -1,6 +1,7 @@
 docker/certs/*.crt
 firmware-out/
 .vscode/
+.DS_Store
 
 # Python bridge
 .venv/
