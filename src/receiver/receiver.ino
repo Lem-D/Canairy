@@ -6,7 +6,8 @@ struct Packet { uint8_t nodeId; uint16_t gas; };
 
 void setup() {
   Serial.begin(9600);
-  rf.init();
+  if (rf.init()) Serial.println("receiver ready");
+  else           Serial.println("receiver init failed");
 }
 
 void loop() {

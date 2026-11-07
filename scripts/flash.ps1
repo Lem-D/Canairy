@@ -19,7 +19,10 @@ param(
     [string]$SerialPort = "/dev/ttyACM0"
 )
 
-$ErrorActionPreference = "Stop"
+# Not "Stop": in Windows PowerShell 5.1 that turns any stderr line from a native tool
+# (usbipd prints info messages there) into a terminating error. Failures are caught
+# via $LASTEXITCODE checks and explicit `throw` instead.
+$ErrorActionPreference = "Continue"
 Set-Location (Split-Path $PSScriptRoot -Parent)
 
 function Get-BoardState {
@@ -57,7 +60,7 @@ try {
     Write-Host "Waiting for $SerialPort..."
     $found = $false
     for ($i = 0; $i -lt 15; $i++) {
-        docker run --rm --entrypoint test -v /dev:/hostdev canairy-firmware -e "/hostdev/$(Split-Path $SerialPort -Leaf)" 2>$null
+        docker run --rm --entrypoint test -v /dev:/hostdev canairy-firmware -e "/hostdev/$(Split-Path $SerialPort -Leaf)" 2>&1 | Out-Null
         if ($LASTEXITCODE -eq 0) { $found = $true; break }
         Start-Sleep -Seconds 1
     }
@@ -69,6 +72,6 @@ try {
 }
 finally {
     Write-Host "Giving the board back to Windows..."
-    usbipd detach --hardware-id $HardwareId 2>$null
+    usbipd detach --hardware-id $HardwareId 2>&1 | Out-Null
     Remove-Item Env:SKETCH, Env:SERIAL_PORT -ErrorAction SilentlyContinue
 }
