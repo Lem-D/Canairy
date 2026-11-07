@@ -1,2 +1,3 @@
 docker/certs/*.crt
 firmware-out/
+.vscode/
