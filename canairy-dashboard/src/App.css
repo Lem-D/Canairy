@@ -448,7 +448,7 @@ code {
   background: var(--panel-light);
 }
 .worker-card.rank-0,
-.worker-card.rank-1 { background: var(--danger-bg); border: 2px solid var(--danger-line); }
+.worker-card.rank-1 { background: var(--danger-bg); border: 1px solid var(--danger-line); }
 .worker-card.is-sos { border-color: var(--sos); }
 .worker-card.rank-2 { border: 1px dashed var(--border-muted); }
 .worker-card.rank-2:hover { border: 1px dashed var(--brand-soft); }
@@ -484,7 +484,7 @@ code {
 .reason { color: var(--muted); }
 .reason.level-warning { color: var(--yellow); }
 .reason.level-danger { color: var(--red); }
-.reason.level-sos { color: var(--danger-text); }
+.reason.level-sos { color: var(--sos); }
 .reason.level-nodata { color: var(--soft); }
 
 .level-text { font-size: 16px; font-weight: 700; }
