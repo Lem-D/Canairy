@@ -3,21 +3,27 @@
 #include <LiquidCrystal.h>
 
 #define MOCK_DATA 0 // 1 to use mock data, 0 to disable mock data
+#define RF_DEBUG 1  // 1 prints radio health to serial every 2 s, 0 for normal use
 
 // Must match the bridge's --baud (default 115200) and BAUD in docker-compose.yml.
 const long SERIAL_BAUD = 115200;
 
-// Radio: RX on pin 7 (moved off 11/12, which the LCD uses).
+// Radio: RX on A0, away from the LCD wires. The receiver's noisy output garbles
+// the LCD if its wire runs next to E or RS.
 // TX pin 8 and PTT pin 9 aren't used on the receiver but must not clash.
-// 2000 bps must match the transmitter's speed (RadioHead default).
-RH_ASK rf(2000, 7, 8, 9);
+// 2000 bps must match the wearable's speed (RadioHead default).
+const uint8_t RF_RX_PIN = A0;
+RH_ASK rf(2000, RF_RX_PIN, 8, 9);
 
-// LCD (parallel): RS=12, E=11, D4=5, D5=4, D6=3, D7=2, V0 on pin 6
-LiquidCrystal lcd(12, 11, 5, 4, 3, 2);
+// LCD (parallel): RS=12, E=10, D4=5, D5=4, D6=3, D7=2, V0 on pin 6
+LiquidCrystal lcd(12, 10, 5, 4, 3, 2);
 const int CONTRAST_PIN = 6;
-int contrast = 75;          // Adjust contrast accordingly
+int contrast = 100;          // Adjust contrast accordingly
 
-// Radio packet. The transmitter must send exactly this layout (6 bytes).
+// These LCDs smear if rewritten quickly. Readings still go to the bridge every time.
+const unsigned long LCD_UPDATE_MS = 1250;
+
+// Radio packet. The wearable must send exactly this layout (6 bytes).
 struct __attribute__((packed)) Packet {
   uint8_t  nodeId;   // worker / wearable number
   uint16_t gas;      // raw MQ-2 analogRead, 0-1023
@@ -25,9 +31,19 @@ struct __attribute__((packed)) Packet {
   uint16_t seq;      // goes up by 1 each send, so the bridge can spot lost packets
 };
 
-// Older transmitter firmware that only sends id + gas (3 bytes).
-// Still accepted so testing works before the transmitter is updated.
+// Older wearable firmware that only sends id + gas (3 bytes).
+// Still accepted so testing works before the wearable is updated.
 struct __attribute__((packed)) LegacyPacket { uint8_t nodeId; uint16_t gas; };
+
+// Packet sent by the Module1 / Module2 wearables (7 bytes).
+// They also send 1-byte distress packets for each other. Those are ignored here
+// because SOS also arrives in this packet's sos field.
+struct __attribute__((packed)) ModulePacket {
+  uint8_t nodeId;
+  float   ppm;      // LPG estimate from the MQ-2
+  uint8_t sos;
+  uint8_t seq;      // wraps at 255; the bridge doesn't count a wrap as lost packets
+};
 
 // Print text on one LCD row, padded so old characters are cleared.
 void lcdRow(uint8_t row, const char* text) {
@@ -39,6 +55,11 @@ void lcdRow(uint8_t row, const char* text) {
 
 void setup() {
   Serial.begin(SERIAL_BAUD);
+#ifdef TCCR4B
+  // Mega: run pin 6's PWM at about 31 kHz (default 490 Hz) so the unfiltered
+  // contrast signal doesn't make the LCD shimmer. Only affects PWM on pins 6-8.
+  TCCR4B = (TCCR4B & 0b11111000) | 0b00000001;
+#endif
   analogWrite(CONTRAST_PIN, contrast);
   lcd.begin(16, 2);
 
@@ -61,6 +82,11 @@ void showPacket(const Packet& p) {
   Serial.print(p.sos ? 1 : 0); Serial.print(",");
   Serial.println(p.seq);
 
+  // An SOS skips the wait so it appears on the LCD straight away.
+  static unsigned long lastLcd = 0;
+  if (!p.sos && millis() - lastLcd < LCD_UPDATE_MS) return;
+  lastLcd = millis();
+
   char text[17];
   if (p.sos) snprintf(text, sizeof(text), "Node %u  SOS!", p.nodeId);
   else       snprintf(text, sizeof(text), "Node %u", p.nodeId);
@@ -73,6 +99,15 @@ void showPacket(const Packet& p) {
 bool decodePacket(const uint8_t* buf, uint8_t len, Packet& p) {
   if (len == sizeof(Packet)) {
     memcpy(&p, buf, sizeof(p));
+    return true;
+  }
+  if (len == sizeof(ModulePacket)) {
+    ModulePacket m;
+    memcpy(&m, buf, sizeof(m));
+    p.nodeId = m.nodeId;
+    p.gas = m.ppm;
+    p.sos = m.sos;
+    p.seq = m.seq;
     return true;
   }
   if (len == sizeof(LegacyPacket)) {
@@ -112,7 +147,7 @@ bool mockPacket(uint8_t i, Packet& p) {
   static bool started = false;
   if (!started) {
     started = true;
-    randomSeed(analogRead(A0));             // A0 is unconnected: different run each reset
+    randomSeed(analogRead(A1));             // A1 is unconnected: different run each reset
     for (uint8_t n = 0; n < MOCK_NODES; n++) {
       nodes[n].baseline = nodes[n].gas = nodes[n].target = random(120, 221);
     }
@@ -164,6 +199,26 @@ void loop() {
   if (rf.recv(buf, &len) && decodePacket(buf, len, p)) {
     showPacket(p);
   }
+
+#if RF_DEBUG
+  // edges = data pin changes (0 means no signal reaches the pin).
+  // good = valid packets, bad = packets that failed their checksum.
+  static bool lastRx = LOW;
+  static uint32_t edges = 0;
+  static unsigned long lastReport = 0;
+  bool rx = digitalRead(RF_RX_PIN);
+  if (rx != lastRx) {
+    lastRx = rx;
+    edges++;
+  }
+  if (millis() - lastReport >= 2000) {
+    lastReport = millis();
+    Serial.print("# rf edges="); Serial.print(edges);
+    Serial.print(" good=");      Serial.print(rf.rxGood());
+    Serial.print(" bad=");       Serial.println(rf.rxBad());
+    edges = 0;
+  }
+#endif
 
 #if MOCK_DATA
   // One node every 250 ms, so each of the 4 updates once per second and the

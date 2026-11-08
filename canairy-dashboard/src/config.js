@@ -6,12 +6,12 @@ export const BRIDGE_URL = 'ws://localhost:8080';
 // No data from a worker for this long and they show as "No signal".
 export const OFFLINE_AFTER_MS = 5000;
 
-// PLACEHOLDER gas cutoffs on the raw MQ-2 reading (0-1023). The team still has
-// to pick real ones: take a clean-air reading after the sensor warms up.
-export const GAS_THRESHOLDS = { warning: 400, danger: 600 };
+// PLACEHOLDER gas cutoffs in LPG ppm, as estimated by the wearable's MQ-2. Danger
+// matches the modules' ppm_thresh. Check both against a calibrated sensor.
+export const GAS_THRESHOLDS = { warning: 1000, danger: 2000 };
 
-// The dial goes from 0 to this. Readings above it pin the needle at the end.
-export const GAUGE_MAX = 800;
+// The dial goes from 0 to this, in ppm. Readings above it pin the needle at the end.
+export const GAUGE_MAX = 3000;
 
 // Shown in the header and the Emergency info box. Fill these in.
 export const SITE = {

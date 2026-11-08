@@ -33,7 +33,7 @@ export default function WorkerCard({ worker: w, view, now, onOpen }) {
       <div className="card-gauge">
         <Gauge value={w.gas} offline={w.offline} label={`Gas gauge: ${w.offline ? 'no data' : w.gas}, ${view.levelText}`} />
         <div className="col">
-          <span className="muted small">Gas · MQ-2</span>
+          <span className="muted small">Gas (ppm) · MQ-2</span>
           <span className={`level-text level-${view.level}`}>{view.levelText}</span>
           <span className="muted small">
             Warn {GAS_THRESHOLDS.warning} · Danger {GAS_THRESHOLDS.danger}

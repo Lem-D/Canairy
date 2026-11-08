@@ -5,19 +5,25 @@
 #
 # Usage (from the repo root):
 #   .\scripts\flash.ps1                        # flash the receiver
-#   .\scripts\flash.ps1 -Sketch transmitter    # flash the transmitter
+#   .\scripts\flash.ps1 -Sketch wearable    # flash a wearable
 #
 # Requires: Docker Desktop and usbipd-win (winget install usbipd).
 # The first run asks for admin once (UAC) to share the board with usbipd.
 
 param(
-    [ValidateSet("receiver", "transmitter")]
+    [ValidateSet("receiver", "wearable")]
     [string]$Sketch = "receiver",
-    # USB VID:PID of the board. 2341:0043 = Arduino Uno R3. CH340 clones are usually 1a86:7523.
-    [string]$HardwareId = "2341:0043",
-    # Where the board appears in Linux. Genuine Uno = /dev/ttyACM0, CH340 clones = /dev/ttyUSB0.
+    # USB VID:PID of the board. Default: 2341:0042 (Mega 2560 R3) for the receiver,
+    # 2341:0043 (Uno R3) for a wearable. CH340 clones are usually 1a86:7523.
+    [string]$HardwareId = "",
+    # Board to compile for. Default: arduino:avr:mega for the receiver, arduino:avr:uno for a wearable.
+    [string]$Fqbn = "",
+    # Where the board appears in Linux. Genuine Arduino = /dev/ttyACM0, CH340 clones = /dev/ttyUSB0.
     [string]$SerialPort = "/dev/ttyACM0"
 )
+
+if (-not $HardwareId) { $HardwareId = if ($Sketch -eq "receiver") { "2341:0042" } else { "2341:0043" } }
+if (-not $Fqbn) { $Fqbn = if ($Sketch -eq "receiver") { "arduino:avr:mega" } else { "arduino:avr:uno" } }
 
 # Not "Stop": in Windows PowerShell 5.1 that turns any stderr line from a native tool
 # (usbipd prints info messages there) into a terminating error. Failures are caught
@@ -45,6 +51,7 @@ if ($state -match "Not shared") {
 
 # Build first so the image exists for the device check below.
 $env:SKETCH = $Sketch
+$env:FQBN = $Fqbn
 $env:SERIAL_PORT = $SerialPort
 docker compose build firmware
 if ($LASTEXITCODE -ne 0) { throw "docker compose build failed." }
@@ -73,5 +80,5 @@ try {
 finally {
     Write-Host "Giving the board back to Windows..."
     usbipd detach --hardware-id $HardwareId 2>&1 | Out-Null
-    Remove-Item Env:SKETCH, Env:SERIAL_PORT -ErrorAction SilentlyContinue
+    Remove-Item Env:SKETCH, Env:FQBN, Env:SERIAL_PORT -ErrorAction SilentlyContinue
 }

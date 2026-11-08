@@ -74,7 +74,7 @@ Canairy is a relay chain: Module 2 only transmits, Module 1 listens and transmit
 3. The receiver Arduino, which only has a receiver, hears Module 1 and passes each reading to the laptop over USB.
 4. The Python bridge reads the USB port and streams the data to the React dashboard at `localhost`, so it works offline without venue Wi-Fi.
 
-**Parts we have.** We have 4 RF modules, which covers this setup: an RF transmitter on Module 2, an RF receiver and an RF transmitter on Module 1, and an RF receiver on the dashboard's Arduino. It also needs three Arduinos, one each for Module 1, Module 2 and the receiver.
+**Parts we have.** We have 4 RF modules, which covers this setup: an RF transmitter on Module 2, an RF receiver and an RF transmitter on Module 1, and an RF receiver on the dashboard's Arduino. It also needs three Arduinos: one each for Module 1 and Module 2, plus a Mega 2560 for the receiver.
 
 ## Core features
 
@@ -94,7 +94,7 @@ Canairy is a relay chain: Module 2 only transmits, Module 1 listens and transmit
 | --- | --- | --- |
 | Module 2 (wearable) | Sensing air, showing local status, SOS button, transmitting its status | Arduino, MQ-2, button, LEDs, screen (maybe), RF transmitter, 9V battery |
 | Module 1 (wearable + relay) | Everything Module 2 does, plus listening to Module 2 and transmitting the status of both | Arduino, MQ-2, button, LEDs, screen (maybe), RF receiver, RF transmitter, 9V battery |
-| Receiver | Hearing Module 1 and passing each reading to the laptop over USB | Arduino, RF receiver |
+| Receiver | Hearing Module 1 and passing each reading to the laptop over USB | Arduino Mega 2560, RF receiver, 16x2 LCD |
 | Bridge (laptop) | Reading the receiver over USB and pushing each reading to the dashboard | Python (`bridge/` in the repo) |
 | React dashboard (laptop browser) | Tracking each worker, spotting alerts and dropouts, showing it all to a supervisor | React (`canairy-dashboard/` in the repo) |
 

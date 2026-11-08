@@ -30,7 +30,7 @@ ARG ARDUINO_CLI_VERSION=1.1.1
 # Mega = arduino:avr:mega, ESP32 = esp32:esp32:esp32 (needs extra board URL).
 ARG FQBN=arduino:avr:uno
 ARG BOARD_MANAGER_URLS=""
-# Which sketch under src/ to build: receiver or transmitter.
+# Which sketch under src/ to build: receiver or wearable.
 ARG SKETCH=receiver
 
 # Extra CA certs (e.g. antivirus/corporate HTTPS inspection). See docker/certs/README.md.

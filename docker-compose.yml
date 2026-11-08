@@ -19,16 +19,16 @@ services:
     ports:
       - "8080:8080"
 
-  # Real receiver Arduino + simulated workers. Uses port 8080 too, so stop `bridge` first:
+  # Real receiver Arduino only, no simulated workers. Uses port 8080 too, so stop `bridge` first:
   #   docker compose stop bridge
-  #   usbipd attach --wsl --hardware-id 2341:0043      (Windows only)
+  #   usbipd attach --wsl --hardware-id 2341:0042      (Windows only)
   #   docker compose --profile hardware up bridge-live
   bridge-live:
     profiles: ["hardware"]
     build:
       context: .
       target: bridge
-    command: ["--port", "${SERIAL_PORT:-/dev/ttyACM0}", "--baud", "115200"]
+    command: ["--port", "${SERIAL_PORT:-/dev/ttyACM0}", "--baud", "115200", "--sim", "0"]
     ports:
       - "8080:8080"
     devices:
