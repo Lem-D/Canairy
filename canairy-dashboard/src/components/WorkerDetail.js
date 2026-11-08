@@ -62,7 +62,7 @@ export default function WorkerDetail({ worker: w, view, events, alerts, now, onA
               <h1 className="detail-name">{w.name}</h1>
               <span className={`pill ${view.status === 'OK' ? 'ok' : view.status === 'NOT OK' ? 'bad' : 'off'}`}>{view.status}</span>
             </div>
-            <p className="soft">
+            <p className="muted">
               {view.role} · Wearable #{w.id} · {w.source === 'live' ? 'live wearable' : 'simulated'} · {view.zoneText}
               {w.firstSeen ? ` · seen since ${clockTime(w.firstSeen)}` : ''}
             </p>

@@ -2,17 +2,7 @@ import { SITE } from '../config';
 import { clockTime } from '../lib';
 
 export function Logo() {
-  return (
-    <div className="logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#1a0f05" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M16 7h.01" />
-        <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
-        <path d="m20 7 2 .5-2 .5" />
-        <path d="M10 18v3" />
-        <path d="M14 17.75V21" />
-      </svg>
-    </div>
-  );
+  return <img className="logo" src={`${process.env.PUBLIC_URL}/logo.svg`} alt="Canairy" />;
 }
 
 function receiver(serial) {
@@ -28,7 +18,6 @@ export default function Header({ connected, serial, simCount, now, onHome }) {
       <button type="button" className="brand" onClick={onHome} aria-label="Canairy overview">
         <Logo />
         <div>
-          <div className="brand-name">Canairy</div>
           <p className="muted small">
             {SITE.name} · {SITE.shift}
           </p>
