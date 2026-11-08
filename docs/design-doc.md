@@ -1,19 +1,19 @@
 # Canairy Design Doc
 
-Last updated Nov 7, 2026 · Lem
+Last updated Nov 8, 2026 · Yuskei
 
 ## Overview
 
 Canairy is a wearable for construction and manufacturing workers that makes them aware of hazards and of each other. It reports each person's air quality and an SOS alert to a live supervisor dashboard, and LEDs on the device signal who is in trouble. For NatHacks 2026 (a 64-hour build) we make two wearable modules. Module 2 only transmits. Module 1 listens to Module 2, adds its own status, and transmits the status of both over 315MHz RF to a receiver Arduino plugged into a laptop, where a React dashboard running locally shows the whole crew.
 
-**Problem.** On a job site or factory floor, a supervisor can't see who is breathing bad air or who needs help until someone shouts. Gas leaks, smoke and fumes hit one person before anyone else notices.
+**Problem.** On many construction and manufacturing job sites, safety culture is often found lacking with many individuals only being monitored by a single supervisor or having to rely on solely themselves. A stronger safety culture is required to promote safety for the entire team; Canairy seeks to solve this problem through shared accountability and increased safety monitory.
 
 **Users.**
 
-- **Workers** wear the device. They see their own status on the device and can press SOS.
+- **Workers** wear the device. They see their own status on the device and can press SOS manually or if the system detects dangerous conditions. If a fellow worker with the device triggers this alert or presses SOS, any other team members and the supervisor on  the dashboard is made aware of it.
 - **Supervisors** watch the dashboard, a React web app running locally on the laptop. They see every active worker, their air status, and any SOS alert with its location.
 
-**What the wearable measures.** Air quality only, using an MQ-2 gas sensor. The MQ-2 reacts to combustible gas (LPG, propane, methane, hydrogen) and smoke. It is not a calibrated CO or particulate sensor, so we report levels as Safe, Warning or Danger rather than exact ppm.
+**What the wearable measures.** Air quality only, using an MQ-2 gas sensor. The MQ-2 reacts to combustible gas (LPG, propane, methane, hydrogen) and smoke. It is not a particulate sensor and needs calibration, so ppm values are recorded under an assumption on which gas is being monitored (LPG for demo purposes) with relative warning levels attached.
 
 **Hackathon scope.**
 
@@ -23,7 +23,7 @@ Canairy is a wearable for construction and manufacturing workers that makes them
 | One receiver Arduino receiving over RF | Two-way messaging to the wearable |
 | Local React dashboard showing workers, air status and SOS | Public web hosting, accounts, logins, cloud services |
 | SOS button with some form of location | Precise indoor positioning |
-| Relative air levels (Safe, Warning, Danger) | Calibrated ppm readings |
+| Relative air levels (Safe, Warning, Danger), ppm readings for one gas type (LPGs) | Calibrated ppm readings for all gases and toggle functionality for which gas is being monitored |
 
 ## System architecture
 
@@ -130,7 +130,9 @@ The dashboard is a React web app that runs locally on the laptop. Most browsers 
 
 - **Location.** The radio only moves bytes; it can't tell where a signal came from. Whatever location the team picks has to travel inside the packet. A GPS module (such as a NEO-6M) gives real coordinates but needs a clear view of the sky and is slow to get a fix indoors, so hardcoded or fake coordinates are fine for a demo.
 - **One-way radio, no acknowledgements.** The wearable can't know an alert was seen, so important messages (especially SOS) should be repeated a few times, and every packet should carry the worker's ID. These cheap modules are also noisy, so a library that adds framing and checksums (such as RadioHead) is worth using.
-- **The MQ-2 sensor.** It reacts to combustible gas and smoke, isn't calibrated, and needs a minute or two to warm up. Set the alarm level from a clean-air reading before the demo.
+- **The MQ-2 sensor.** It reacts to combustible gas and smoke, isn't calibrated, and needs a minute or two to warm up. Set the alarm level from a clean-air reading before general use.
+    - MQ-2 sensor measures all of the following gases simultaneously: H2, LPG, CH4, CO, Alcohol, Smoke, Propane. Canairy was calibrated for LPG prior to demo, but capability to cycle the gas checked can be implemented in later installments.
+    - Conversion of output voltage of MQ-2 sensor to PPM of LPG was done via analysis of the sensitivity characteristic curve of the sensor seen on the data sheet. 
 - **Power.** The sensor's heater draws about 150mA, which drains a 9V battery within a few hours, so plan spares.
 - **Range.** These radios are short range without an antenna; a wire of about 23-24cm (a quarter wavelength at 315MHz) on each module helps a lot.
 - **Relaying through Module 1.** Everything travels on one 315MHz channel, so a few things need planning:
