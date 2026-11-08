@@ -43,7 +43,7 @@ export default function WorkerCard({ worker: w, view, now, onOpen }) {
 
       <div className="card-foot">
         <span>{view.zoneText}</span>
-        <span>{w.offline ? `Last seen ${duration(now - w.lastSeen)} ago` : `Updated ${duration(now - w.lastSeen)} ago`}</span>
+        <span>{w.offline ? `Last seen ${duration(now - w.lastSeen)} ago` : `Updated ${now - w.lastSeen < 1500 ? "now" : `${duration(now - w.lastSeen)} ago`}`}</span>
       </div>
     </button>
   );
