@@ -3,6 +3,7 @@
 :root {
   color-scheme: dark;
   --bg: #0b0624;
+  --panel-light: #150f29;
   --panel: #120a29;
   --panel-deep: #0d0520;
   --line: #292047;
@@ -442,11 +443,15 @@ code {
   min-width: 0;
 }
 
-.worker-card:hover { border-color: var(--brand); }
+.worker-card:hover {
+  border-color: var(--brand);
+  background: var(--panel-light);
+}
 .worker-card.rank-0,
 .worker-card.rank-1 { background: var(--danger-bg); border: 2px solid var(--danger-line); }
 .worker-card.is-sos { border-color: var(--sos); }
 .worker-card.rank-2 { border: 1px dashed var(--border-muted); }
+.worker-card.rank-2:hover { border: 1px dashed var(--brand-soft); }
 .worker-card.rank-3 { border-color: var(--warning-line); }
 
 .card-top {
@@ -590,7 +595,7 @@ code {
   height: 30px;
   border-radius: 50%;
   background: var(--avatar-bg);
-  border: 2px solid var(--green);
+  border: 1px solid var(--green);
   color: var(--avatar-text);
   font-size: 11px;
   font-weight: 700;
