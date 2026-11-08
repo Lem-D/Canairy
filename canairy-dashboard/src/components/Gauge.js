@@ -21,15 +21,15 @@ export default function Gauge({ value, offline = false, width = 140, label }) {
     <svg width={width} height={(width * 96) / 140} viewBox="0 0 140 96" role="img" aria-label={label} className="gauge">
       <defs>
         <linearGradient id={gradientId} gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="120" y2="0">
-          <stop offset="0" stopColor="#3f9e70" />
-          <stop offset="0.3" stopColor="#7cbf55" />
-          <stop offset="0.5" stopColor="#e2c13f" />
-          <stop offset="0.75" stopColor="#ff8a3c" />
-          <stop offset="0.95" stopColor="#e0533f" />
+          <stop offset="0" stopColor="var(--green)" />
+          <stop offset="0.3" stopColor="var(--safe-bar)" />
+          <stop offset="0.5" stopColor="var(--yellow)" />
+          <stop offset="0.75" stopColor="var(--brand)" />
+          <stop offset="0.95" stopColor="var(--danger-bar)" />
         </linearGradient>
       </defs>
-      <path d="M23 79.1 A50 50 0 1 1 117 79.1" fill="none" stroke="#2a231e" strokeWidth="16" />
-      <path d="M23 79.1 A50 50 0 1 1 117 79.1" fill="none" stroke={offline ? '#3a332c' : `url(#${gradientId})`} strokeWidth="12" />
+      <path d="M23 79.1 A50 50 0 1 1 117 79.1" fill="none" stroke="var(--panel-deep)" strokeWidth="16" />
+      <path d="M23 79.1 A50 50 0 1 1 117 79.1" fill="none" stroke={offline ? 'var(--off-bg)' : `url(#${gradientId})`} strokeWidth="12" />
       {TICKS.map((f) => {
         const p = tickPos(f);
         return (
@@ -41,9 +41,9 @@ export default function Gauge({ value, offline = false, width = 140, label }) {
       {!offline && (
         <>
           <g className="gauge-needle" style={{ transform: `rotate(${needle}deg)` }}>
-            <path d="M70 59.5 L112 62 L70 64.5 Z" fill="#f4efe9" />
+            <path d="M70 59.5 L112 62 L70 64.5 Z" fill="var(--text)" />
           </g>
-          <circle cx="70" cy="62" r="5" fill="#f4efe9" stroke="#15120f" strokeWidth="2" />
+          <circle cx="70" cy="62" r="5" fill="var(--text)" stroke="var(--bg)" strokeWidth="2" />
         </>
       )}
       <text x="70" y="90" textAnchor="middle" className="gauge-value">

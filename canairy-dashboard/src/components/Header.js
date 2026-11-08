@@ -4,7 +4,7 @@ import { clockTime } from '../lib';
 export function Logo() {
   return (
     <div className="logo">
-      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#1a0f05" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="var(--ink-on-brand)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 7h.01" />
         <path d="M3.4 18H12a8 8 0 0 0 8-8V7a4 4 0 0 0-7.28-2.3L2 20" />
         <path d="m20 7 2 .5-2 .5" />

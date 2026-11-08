@@ -38,7 +38,7 @@ export default function Worksite({ items, alerts, events, siteHistory, serial, n
         </div>
         {alerts.length === 0 && (
           <div className="all-clear">
-            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="#5fd39a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="var(--green)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12l5 5L20 7" />
             </svg>
             No active alerts. Everyone is OK.

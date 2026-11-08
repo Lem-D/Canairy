@@ -35,6 +35,8 @@
   --offline-border: #635477;
   --danger-text: #ffaaa7;
   --bar-axis: #49365f;
+  --danger-surface: #3a1625;
+  --warning-surface: #30250b;
 }
 
 body {
@@ -363,7 +365,7 @@ code {
 /* Banner */
 
 .banner {
-  --banner-bg: #3a1625;
+  --banner-bg: var(--danger-surface);
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
@@ -539,11 +541,11 @@ code {
   gap: 12px;
   padding: 12px;
   border-radius: 10px;
-  background: #3a1625;
+  background: var(--danger-surface);
 }
 
 .alert-row.offline { background: var(--offline-bg); }
-.alert-row.warning { background: #30250b; }
+.alert-row.warning { background: var(--warning-surface); }
 .alert-row.acked { opacity: 0.65; }
 .alert-row .btn.outline { border-color: var(--danger-text); }
 .alert-row.offline .btn.outline { border-color: var(--offline-border); }
