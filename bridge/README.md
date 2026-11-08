@@ -72,6 +72,7 @@ Add them after `python bridge.py`, for example `python bridge.py --port COM3 --s
 | `--sim <n>` | How many simulated workers. `0` turns them off | `4` |
 | `--no-serial` | Don't look for an Arduino at all, simulation only | off |
 | `--ws-port <n>` | WebSocket port | `8080` |
+| `--host <addr>` | Address to listen on. Docker uses `0.0.0.0` so the published port works | `localhost` |
 
 Other commands (with the virtual environment on):
 
@@ -153,7 +154,7 @@ The React side is the `useWorkers` hook in
 import { useWorkers } from './hooks/useWorkers';
 
 function App() {
-  const { workers, connected, acknowledge } = useWorkers();
+  const { workers, connected, serial, siteHistory, acknowledge, now } = useWorkers();
   return (
     <div>
       {!connected && <p>Bridge not running. Start it with python bridge.py</p>}
@@ -169,10 +170,16 @@ function App() {
 }
 ```
 
-Each worker also has `offline` (nothing heard for 5 s), `level`
-(`safe` / `warning` / `danger`) and `reasons` (why it's Not OK). The gas
-thresholds and what counts as Not OK are placeholders at the top of the hook,
-for the team to decide. It reconnects by itself if the bridge restarts.
+Besides what the bridge sends, each worker has `offline` (nothing heard for
+5 s), `level` (`safe` / `warning` / `danger`), `ok` and `reasons` (why it's Not
+OK), plus browser-side extras: `history` (gas over the last 10 minutes),
+`sosSince` and `dangerSince`. The hook also returns `serial` (receiver Arduino
+status), `siteHistory` (highest gas reading on site, once a second) and `now`.
+The full list is in the comment at the top of the hook.
+
+The gas thresholds, the offline timeout and the bridge address are placeholders
+in [`../canairy-dashboard/src/config.js`](../canairy-dashboard/src/config.js),
+for the team to decide. The hook reconnects by itself if the bridge restarts.
 
 ## What the dashboard receives
 

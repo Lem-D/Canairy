@@ -46,9 +46,15 @@ worker presses SOS or walks into bad air, and the dashboard reacts within a seco
 
 ### Running it in Docker
 
-`docker compose up dashboard` serves a built copy at http://localhost:3000. The
-bridge still has to run on the laptop itself (Docker can't see USB on Mac or
-Windows). The page connects to `ws://localhost:8080` from your browser, so this works.
+`docker compose up` (or `docker compose up dashboard`) serves a built copy at
+http://localhost:3000 and also starts the bridge in Docker with simulated
+workers, so there's nothing else to run. The page connects to
+`ws://localhost:8080` from your browser.
+
+The `sos 101` / `gas 102` rehearsal commands need a terminal, so they don't work
+with the Docker bridge. To use them, stop it (`docker compose stop bridge`) and
+run `python bridge.py` on the laptop. To use a real receiver Arduino, see
+[`../bridge/README.md`](../bridge/README.md).
 
 ## Where things are
 
