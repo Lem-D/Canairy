@@ -28,7 +28,7 @@ export default function Gauge({ value, offline = false, width = 140, label }) {
           <stop offset="0.95" stopColor="var(--danger-bar)" />
         </linearGradient>
       </defs>
-      <path d="M23 79.1 A50 50 0 1 1 117 79.1" fill="none" stroke="var(--panel-deep)" strokeWidth="16" />
+      <path d="M23 79.1 A50 50 0 1 1 117 79.1" fill="none" stroke="transparent" strokeWidth="16" />
       <path d="M23 79.1 A50 50 0 1 1 117 79.1" fill="none" stroke={offline ? 'var(--off-bg)' : `url(#${gradientId})`} strokeWidth="12" />
       {TICKS.map((f) => {
         const p = tickPos(f);
