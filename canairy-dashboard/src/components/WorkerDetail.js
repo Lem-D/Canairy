@@ -77,7 +77,7 @@ export default function WorkerDetail({ worker: w, view, events, alerts, now, onA
 
       <div className="tiles">
         <div className="panel box">
-          <div className="muted small">Gas now · MQ-2</div>
+          <div className="muted small">Gas now (ppm) · MQ-2</div>
           <div className="gauge-row">
             <Gauge value={w.gas} offline={w.offline} width={210} label={`Gas gauge: ${w.offline ? 'no data' : w.gas}, ${view.levelText}`} />
             <div>

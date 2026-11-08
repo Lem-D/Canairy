@@ -24,7 +24,7 @@ class Simulator:
         self.interval = interval
         self.workers = []
         for i in range(count):
-            baseline = random.uniform(120, 220)
+            baseline = random.uniform(300, 600)  # gas is in ppm, like the real modules
             self.workers.append({
                 "id": SIM_ID_START + i, "baseline": baseline, "gas": baseline, "target": baseline,
                 "seq": 0, "sos_until": 0, "quiet_until": 0, "gas_until": 0,
@@ -44,10 +44,10 @@ class Simulator:
             if now > w["gas_until"]:
                 w["target"] = w["baseline"]
                 if chance(self._per_tick(0.25)):
-                    w["target"] = random.uniform(450, 850)
+                    w["target"] = random.uniform(1200, 2800)
                     w["gas_until"] = now + random.uniform(10, 25)
-            w["gas"] += (w["target"] - w["gas"]) * 0.25 + random.uniform(-8, 8)
-            w["gas"] = max(0, min(1023, w["gas"]))
+            w["gas"] += (w["target"] - w["gas"]) * 0.25 + random.uniform(-25, 25)
+            w["gas"] = max(0, w["gas"])
 
             # SOS events.
             if w["sos_until"] and now > w["sos_until"]:
@@ -88,6 +88,6 @@ class Simulator:
     def trigger_gas(self, worker_id):
         w = self._find(worker_id)
         if w:
-            w["target"] = 800
+            w["target"] = 2600
             w["gas_until"] = time.time() + 20
         return w is not None

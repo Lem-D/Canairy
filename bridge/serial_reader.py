@@ -27,10 +27,22 @@ KNOWN_VENDOR_IDS = {
     0x239A,  # Adafruit
 }
 
+# USB vendor and product ids of a genuine Mega 2560, which is the receiver board.
+MEGA_USB_IDS = {
+    (0x2341, 0x0010),  # Mega 2560
+    (0x2341, 0x0042),  # Mega 2560 R3
+    (0x2A03, 0x0042),  # Mega 2560 R3 (arduino.org)
+}
+
 
 def find_arduino_port():
-    """Picks the most likely Arduino from the list of serial ports."""
+    """Picks the receiver from the list of serial ports: a Mega if there is one
+    (a wearable's Uno may be plugged in too), otherwise the most likely Arduino.
+    Clone boards can't be identified as a Mega, so they use the fallback."""
     ports = list(list_ports.comports())
+    for p in ports:
+        if (p.vid, p.pid) in MEGA_USB_IDS:
+            return p.device
     for p in ports:
         if p.vid in KNOWN_VENDOR_IDS:
             return p.device

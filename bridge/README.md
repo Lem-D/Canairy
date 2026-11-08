@@ -51,7 +51,7 @@ You can also run it in Docker (see the root README):
 - `docker compose up bridge` runs simulated workers only, on any machine.
 - `docker compose --profile hardware up bridge-live` also reads the real
   receiver. Docker Desktop can't see USB devices on its own: on Windows, hand
-  the board over first with `usbipd attach --wsl --hardware-id 2341:0043`. On
+  the board over first with `usbipd attach --wsl --hardware-id 2341:0042`. On
   a Mac, run the bridge straight on the laptop for live data.
 
 Inside Docker the bridge is started with `--host 0.0.0.0` so the published
@@ -106,7 +106,7 @@ id,gas,sos,seq
 | Field | Meaning | Example |
 | --- | --- | --- |
 | `id` | Wearable number, 1-99 (101+ is taken by simulated workers) | `1` |
-| `gas` | Raw MQ-2 `analogRead` value, 0-1023 | `312` |
+| `gas` | Gas level in LPG ppm, whole number | `312` |
 | `sos` | `1` while SOS is active, otherwise `0` | `0` |
 | `seq` | Counter that goes up by 1 every packet the wearable sends | `57` |
 

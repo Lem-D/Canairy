@@ -89,9 +89,9 @@ urgent cards move to the top: SOS, then dangerous gas, then no signal, then gas
 warnings.
 
 **The gas cutoffs are placeholders** (`GAS_THRESHOLDS` in `src/config.js`:
-warning 400, danger 600 on the raw 0-1023 reading). The team should take a
-clean-air reading after the sensor warms up and pick real numbers. The dial
-goes from 0 to 800 (`GAUGE_MAX`), so anything higher pins the needle.
+warning 1000, danger 2000, in LPG ppm). The team should check them against a
+calibrated sensor and pick real numbers. The dial goes from 0 to 3000
+(`GAUGE_MAX`), so anything higher pins the needle.
 
 ## Acknowledging alerts
 

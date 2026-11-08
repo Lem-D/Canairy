@@ -13,7 +13,7 @@ export default function AlertBanner({ alert, now, onView, onAcknowledge }) {
     detail = `${view.zoneText} · pressed at ${clockTime(w.sosSince || now)} (${duration(now - (w.sosSince || now))} ago). Send help and acknowledge.`;
   } else if (kind === 'gas') {
     title = `Dangerous gas near ${w.name}`;
-    detail = `Reading ${w.gas} in ${view.zoneText}, above the ${GAS_THRESHOLDS.danger} danger line. Clear the area.`;
+    detail = `Reading ${w.gas} ppm in ${view.zoneText}, above the ${GAS_THRESHOLDS.danger} ppm danger line. Clear the area.`;
   } else {
     title = `${w.name} is not reporting`;
     detail = `No signal for ${duration(now - w.lastSeen)}. Check the wearable battery and radio range.`;

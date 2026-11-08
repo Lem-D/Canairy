@@ -8,9 +8,10 @@ Usage: ./scripts/flash.sh [options]
 Compile firmware in Docker, then upload it through Arduino CLI on macOS.
 
 Options:
-  -s, --sketch NAME  Sketch to flash: receiver or transmitter (default: receiver)
+  -s, --sketch NAME  Sketch to flash: receiver or wearable (default: receiver)
   -p, --port PATH    Serial port (default: auto-detect /dev/cu.*)
-  -f, --fqbn FQBN    Fully qualified board name (default: arduino:avr:uno)
+  -f, --fqbn FQBN    Fully qualified board name (default: arduino:avr:mega for
+                     the receiver, arduino:avr:uno for a wearable)
       --no-monitor   Do not open the serial monitor after uploading
   -h, --help         Show this help
 EOF
@@ -18,7 +19,7 @@ EOF
 
 sketch=receiver
 serial_port=
-fqbn=arduino:avr:uno
+fqbn=
 monitor=true
 
 while [[ $# -gt 0 ]]; do
@@ -55,12 +56,16 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "$sketch" in
-    receiver|transmitter) ;;
+    receiver|wearable) ;;
     *)
-        echo "Sketch must be 'receiver' or 'transmitter'." >&2
+        echo "Sketch must be 'receiver' or 'wearable'." >&2
         exit 2
         ;;
 esac
+
+if [[ -z "$fqbn" ]]; then
+    if [[ "$sketch" == receiver ]]; then fqbn=arduino:avr:mega; else fqbn=arduino:avr:uno; fi
+fi
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
     echo "This script is for macOS. Use scripts/flash.ps1 on Windows." >&2

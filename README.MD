@@ -92,13 +92,13 @@ docker compose up -d --build     # dashboard (http://localhost:3000) + bridge wi
 docker compose down              # stop
 ```
 
-To feed in the real receiver Arduino instead of only simulated workers:
+To show only the real receiver (an Arduino Mega 2560), with no simulated workers:
 
 ```powershell
 docker compose stop bridge
-usbipd attach --wsl --hardware-id 2341:0043      # Windows only: hand the board to Docker
+usbipd attach --wsl --hardware-id 2341:0042      # Windows only: hand the board to Docker
 docker compose --profile hardware up --build bridge-live
-usbipd detach --hardware-id 2341:0043            # when done
+usbipd detach --hardware-id 2341:0042            # when done
 ```
 
 Port 8080 must be free: the dashboard always connects to `ws://localhost:8080`.
@@ -109,21 +109,21 @@ The firmware is compiled and uploaded from Docker, so nothing Arduino-related ne
 
 ```powershell
 .\scripts\flash.ps1                        # receiver (src/receiver)
-.\scripts\flash.ps1 -Sketch transmitter    # wearable (src/transmitter)
+.\scripts\flash.ps1 -Sketch wearable    # wearable (src/wearable)
 ```
 
-The script hands the board to Docker, uploads, opens the serial monitor (Ctrl+C to exit), then gives the board back to Windows. The first run asks for admin once. For CH340 clone boards add `-HardwareId 1a86:7523 -SerialPort /dev/ttyUSB0`.
+The script hands the board to Docker, uploads, opens the serial monitor (Ctrl+C to exit), then gives the board back to Windows. The first run asks for admin once. The receiver is built for a Mega 2560 (USB ID `2341:0042`) and wearables for an Uno (USB ID `2341:0043`); use `-Fqbn` and `-HardwareId` to override that. If you run `usbipd` yourself, use the ID of the board you're connecting. For CH340 clone boards add `-HardwareId 1a86:7523 -SerialPort /dev/ttyUSB0`.
 
 ### Linux
 
 Docker can use USB devices directly on Linux, so no host Arduino tools are needed, and you flash with Docker Compose instead of a script. Run from the repository root, with the board plugged in:
 
 ```bash
-SKETCH=receiver docker compose run --rm --build firmware       # receiver (src/receiver)
-SKETCH=transmitter docker compose run --rm --build firmware    # wearable (src/transmitter)
+SKETCH=receiver FQBN=arduino:avr:mega docker compose run --rm --build firmware       # receiver (src/receiver)
+SKETCH=wearable docker compose run --rm --build firmware    # wearable (src/wearable)
 ```
 
-The board must be plugged in before you run it, because compose maps the serial device into the container. It defaults to `/dev/ttyACM0` (genuine Uno); for CH340 clones set `SERIAL_PORT=/dev/ttyUSB0`. Run `ls /dev/ttyACM* /dev/ttyUSB*` to see which one appeared. The container uploads, then opens the serial monitor (Ctrl+C to exit).
+The board must be plugged in before you run it, because compose maps the serial device into the container. It defaults to `/dev/ttyACM0` (genuine Uno or Mega); for CH340 clones set `SERIAL_PORT=/dev/ttyUSB0`. Run `ls /dev/ttyACM* /dev/ttyUSB*` to see which one appeared. The container uploads, then opens the serial monitor (Ctrl+C to exit).
 
 Running the bridge on the laptop (not in Docker) with a real receiver needs one extra step: your user must be in the `dialout` group (`uucp` on Arch), or the serial port can't be opened.
 
@@ -149,7 +149,7 @@ Connect the Arduino and run from the repository root:
 
 ```bash
 ./scripts/flash.sh                                      # receiver
-./scripts/flash.sh --sketch transmitter                 # wearable
+./scripts/flash.sh --sketch wearable                 # wearable
 ./scripts/flash.sh --port /dev/cu.usbmodem1101          # choose a port
 ./scripts/flash.sh --no-monitor                         # upload without opening monitor
 ```
@@ -160,13 +160,67 @@ Wiring:
 
 | Board | Part | Arduino pins |
 | --- | --- | --- |
-| Wearable | RF transmitter DATA | 12 |
-| Wearable | MQ-2 AO | A0 |
-| Wearable | SOS button | 2 and GND |
-| Receiver | RF receiver DATA | 7 |
-| Receiver | 16x2 LCD (parallel) | RS 12, E 11, D4-D7 5/4/3/2, V0 (contrast) 6 |
+| Wearable (Uno) | RF transmitter DATA | 12 |
+| Wearable (Uno) | MQ-2 AO | A0 |
+| Wearable (Uno) | SOS button | 2 and GND |
+| Wearable (Uno) | Alert LED | 4 |
+| Wearable (Uno, relay only) | RF receiver DATA | 11 |
+| Wearable (Uno, relay only) | Buddy LED | 8 |
+| Receiver (Mega 2560) | RF receiver DATA | A0 (keep the wire away from the LCD wires) |
+| Receiver (Mega 2560) | 16x2 LCD (parallel) | RS 12, E 10, D4-D7 5/4/3/2, V0 (contrast) 6 |
 
-Set `NODE_ID` in `src/transmitter/transmitter.ino` to give each wearable its own number. `MOCK_DATA` at the top of `src/receiver/receiver.ino` makes the receiver invent readings for testing without a wearable; set it to `0` for real use.
+Both wearables run `src/wearable/wearable.ino`. At power-on, a wearable with an RF receiver on pin 11 becomes the relay (worker 1) and forwards the other wearable's readings; one without a receiver becomes the sensor (worker 67). The role is printed over serial at startup. `MOCK_DATA` at the top of `src/receiver/receiver.ino` makes the receiver invent readings for testing without a wearable; set it to `0` for real use.
+
+### Receiver wiring (Mega 2560)
+
+```text
+   RF RECEIVER (315 MHz)              ARDUINO MEGA 2560
+  +---------------------+            +-----------------+
+  | VCC ----------------|------------| 5V              |
+  | GND ----------------|------------| GND             |
+  | DATA ---------------|------------| A0              |
+  | ANT -- ~24 cm wire  |            |                 |
+  +---------------------+            |                 |
+                                     |                 |
+   16x2 LCD (parallel)               |                 |
+  +---------------------+            |                 |
+  |  1 VSS -------------|------------| GND             |
+  |  2 VDD -------------|------------| 5V              |
+  |  3 V0 (contrast) ---|------------| 6               |
+  |  4 RS --------------|------------| 12              |
+  |  5 RW --------------|------------| GND             |
+  |  6 E ---------------|------------| 10              |
+  |  7-10 D0-D3         |  not used  |                 |
+  | 11 D4 --------------|------------| 5               |
+  | 12 D5 --------------|------------| 4               |
+  | 13 D6 --------------|------------| 3               |
+  | 14 D7 --------------|------------| 2               |
+  | 15 A (backlight +) -|--[220R]----| 5V              |
+  | 16 K (backlight -) -|------------| GND             |
+  +---------------------+            +-----------------+
+```
+
+| Part | Part pin | Mega pin | Notes |
+| --- | --- | --- | --- |
+| RF receiver | VCC | 5V | |
+| RF receiver | GND | GND | |
+| RF receiver | DATA | A0 | Keep this wire away from the LCD's E and RS wires |
+| RF receiver | ANT | None | About 24 cm of solid wire for 315 MHz |
+| LCD | 1 VSS | GND | |
+| LCD | 2 VDD | 5V | |
+| LCD | 3 V0 | 6 | Contrast is set by `contrast` in `receiver.ino` |
+| LCD | 4 RS | 12 | |
+| LCD | 5 RW | GND | Must be grounded; the firmware only writes to the LCD |
+| LCD | 6 E | 10 | |
+| LCD | 7-10 D0-D3 | None | Leave unconnected (4-bit mode) |
+| LCD | 11 D4 | 5 | |
+| LCD | 12 D5 | 4 | |
+| LCD | 13 D6 | 3 | |
+| LCD | 14 D7 | 2 | |
+| LCD | 15 A | 5V through 220 ohm resistor | Skip the resistor only if the LCD board has one built in |
+| LCD | 16 K | GND | |
+
+Some RF receiver boards have two DATA pins; they are joined on the board, so connect either one. Pins 8 and 9 are reserved by the radio library, and the firmware doesn't need anything wired to them. Leave pins 0 and 1 free, because uploads use them.
 
 ## Testing
 

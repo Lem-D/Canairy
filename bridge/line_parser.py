@@ -5,7 +5,7 @@ THE LINE FORMAT (agree this with the hardware side):
     id,gas,sos,seq        e.g.  1,312,0,57
 
   id   worker / wearable number (whole number, 1-99 for real wearables)
-  gas  raw MQ-2 reading from analogRead, 0-1023
+  gas  gas level in LPG ppm, whole number
   sos  1 if the SOS button is active, otherwise 0
   seq  packet counter that goes up by 1 each send (used to spot lost packets)
 
@@ -14,7 +14,7 @@ Lines starting with # are always ignored (handy for comments/debug).
 
 If the format changes, this is the only function that needs editing.
 It just has to return {"id": int, "gas": int, "sos": bool, "seq": int} or None.
-"gas" is the raw analogRead value (0-1023), not ppm.
+"gas" is in ppm.
 """
 
 

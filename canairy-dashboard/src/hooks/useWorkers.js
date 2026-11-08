@@ -6,7 +6,7 @@
 //   const { workers, connected, serial, siteHistory, acknowledge, now } = useWorkers();
 //
 //   workers      every worker the bridge has seen, sorted by id. Each one has:
-//                  id, name, source ('live' | 'sim'), gas (0-1023), sos,
+//                  id, name, source ('live' | 'sim'), gas (ppm), sos,
 //                  acknowledged, seq, lost (packets missed), lastSeen (ms),
 //                  offline     true if nothing heard for OFFLINE_AFTER_MS
 //                  level       'safe' | 'warning' | 'danger' from GAS_THRESHOLDS

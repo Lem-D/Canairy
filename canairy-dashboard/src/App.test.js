@@ -57,7 +57,7 @@ test('shows worker cards and sends SOS acknowledgements to the bridge', () => {
 
 test('dangerous gas shows a banner and opens the worker page', () => {
   render(<App />);
-  sendSnapshot([{ id: 103, name: 'Priya Patel', gas: 700 }]);
+  sendSnapshot([{ id: 103, name: 'Priya Patel', gas: 2500 }]);
 
   expect(screen.getByRole('alert')).toHaveTextContent('Dangerous gas near Priya Patel');
   act(() => screen.getAllByRole('button', { name: 'Open details for Priya Patel' })[0].click());
