@@ -1,6 +1,7 @@
 # Canairy Design Doc
 
-Last updated Nov 8, 2026 · Yuskei
+## Resources
+Pitch Slides: [Here](https://docs.google.com/presentation/d/18SDR_fWoqtpLuMwnFeN7VjkKY_wzVUryHObZIeXzKgM/edit?usp=sharing)
 
 ## Overview
 
