@@ -243,6 +243,7 @@ Notes:
 
 ## More documentation
 
+- Pitch Slides: [Here](https://docs.google.com/presentation/d/18SDR_fWoqtpLuMwnFeN7VjkKY_wzVUryHObZIeXzKgM/edit?usp=sharing)
 - [`bridge/README.md`](bridge/README.md): bridge options, the serial line format the receiver must print, and the WebSocket messages
 - [`canairy-dashboard/README.md`](canairy-dashboard/README.md): dashboard details
 - [`docs/design-doc.md`](docs/design-doc.md): design doc
