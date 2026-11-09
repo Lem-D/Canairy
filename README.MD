@@ -109,7 +109,7 @@ The firmware is compiled and uploaded from Docker, so nothing Arduino-related ne
 
 ```powershell
 .\scripts\flash.ps1                        # receiver (src/receiver)
-.\scripts\flash.ps1 -Sketch wearable    # wearable (src/wearable)
+.\scripts\flash.ps1 -Sketch wearable    # wearable (src/wearable) NOTE: Wearable firmware is currently untested, so flash the Module 1 and Module 2 firmware to the Arduinos (files included in repository, flash using Arduino IDE for now since the dockerfile is set up to just flash the receiver and wearable code).
 ```
 
 The script hands the board to Docker, uploads, opens the serial monitor (Ctrl+C to exit), then gives the board back to Windows. The first run asks for admin once. The receiver is built for a Mega 2560 (USB ID `2341:0042`) and wearables for an Uno (USB ID `2341:0043`); use `-Fqbn` and `-HardwareId` to override that. If you run `usbipd` yourself, use the ID of the board you're connecting. For CH340 clone boards add `-HardwareId 1a86:7523 -SerialPort /dev/ttyUSB0`.
